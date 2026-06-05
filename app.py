@@ -224,9 +224,9 @@ def _check_login() -> bool:
             padding: 36px 32px 28px 32px;
         }
 
-        /* Witte canvas achter het logo zodat witte letters zichtbaar zijn */
+        /* Donkergroene canvas achter het logo zodat witte letters zichtbaar zijn */
         .login-logo-box {
-            background: #ffffff;
+            background: #0a1f0f;
             border-radius: 8px;
             padding: 10px 14px;
             display: inline-block;
