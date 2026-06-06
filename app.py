@@ -575,38 +575,34 @@ if pagina == "Home":
             kpi(f"Gem. NDVI {st.session_state['ndvi_jaar']}", ndvi_jaar_str, "kies jaar hieronder"),
             unsafe_allow_html=True,
         )
-        # Groene slider via CSS — discrete jaren, geen rode balk
+        # Horizontale radio-knoppen als jaar-selector (geen slider met rode balk)
         st.markdown(
             """
             <style>
-            /* Slider thumb groen */
-            div[data-testid="stSlider"] div[role="slider"] {
-                background-color: #00FF41 !important;
+            div[data-testid="stRadio"] > div { flex-direction: row !important; gap: 6px; }
+            div[data-testid="stRadio"] label {
+                font-size: 0.72rem !important;
+                padding: 2px 8px !important;
+                border: 1px solid #1a3320;
+                border-radius: 20px;
+                color: #888 !important;
+                cursor: pointer;
+            }
+            div[data-testid="stRadio"] label:has(input:checked) {
                 border-color: #00FF41 !important;
+                color: #00FF41 !important;
+                font-weight: 700 !important;
             }
-            /* Alle track-segmenten grijs — ook het rode gevulde deel */
-            div[data-testid="stSlider"] div[data-testid="stSliderTrack"] > div {
-                background: #555555 !important;
-            }
-            div[data-testid="stSlider"] div[data-testid="stSliderTrack"] {
-                background: #555555 !important;
-            }
-            /* Breed net uitwerpen op BaseWeb track internals */
-            div[data-testid="stSlider"] [class*="Track"],
-            div[data-testid="stSlider"] [class*="track"],
-            div[data-testid="stSlider"] [class*="Fill"],
-            div[data-testid="stSlider"] [class*="fill"] {
-                background-color: #555555 !important;
-                background: #555555 !important;
-            }
+            div[data-testid="stRadio"] input[type="radio"] { display: none !important; }
             </style>
             """,
             unsafe_allow_html=True,
         )
-        gekozen_ndvi_jaar = st.select_slider(
-            "NDVI jaar selectie",
+        gekozen_ndvi_jaar = st.radio(
+            "NDVI jaar",
             options=ndvi_jaren_sorted,
-            value=st.session_state["ndvi_jaar"],
+            index=ndvi_jaren_sorted.index(st.session_state["ndvi_jaar"]),
+            horizontal=True,
             label_visibility="collapsed",
             key="ndvi_jaar",
         )
