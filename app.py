@@ -79,32 +79,32 @@ st.markdown(
         display: none;
     }
 
-    /* ── Radio-items: wit, geen icoontjes ── */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label {
-        font-size: 0.88rem;
-        letter-spacing: 0.04em;
+    /* ── Sidebar nav-links ── */
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 8px;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 0.86rem;
         color: #ffffff !important;
         font-weight: 400;
-        padding: 4px 0;
+        cursor: pointer;
+        margin-bottom: 2px;
+        transition: background 0.15s;
     }
-    /* ── Actief radio-item → groen (meerdere selectors voor brede browsercompatibiliteit) ── */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked),
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input[type="radio"]:checked),
-    [data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    .nav-link:hover { background: rgba(255,255,255,0.06); }
+    .nav-link.active {
         color: #00FF41 !important;
-        font-weight: 700 !important;
+        font-weight: 700;
+        background: rgba(0,255,65,0.07);
     }
-    /* ── Fallback: geselecteerde radio-tekst-span ── */
-    [data-testid="stSidebar"] .stRadio [aria-checked="true"] ~ div,
-    [data-testid="stSidebar"] .stRadio input:checked + div {
-        color: #00FF41 !important;
-        font-weight: 700 !important;
+    .nav-link svg {
+        flex-shrink: 0;
+        opacity: 0.85;
     }
-
-    /* ── Hover ── */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover {
-        color: #32a852 !important;
-    }
+    .nav-link.active svg { opacity: 1; }
 
     /* ── HR in sidebar ── */
     [data-testid="stSidebar"] hr {
@@ -463,17 +463,47 @@ with st.sidebar:
 
     st.markdown(_logo_html("BM_LOGO_TRANSP.png", max_w="50%"), unsafe_allow_html=True)
 
-    # Navigatiemenu — puur witte tekst, geen icoontjes
+    # Navigatiemenu — SVG-icoontjes + klikbare links via query_params
+    PAGINA_OPTIES = ["Home", "Browser", "Analyser", "Reports"]
+    PAGINA_ICONS = {
+        "Home": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+        "Browser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+        "Analyser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+        "Reports": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+    }
+
+    # Verborgen radio voor Streamlit state — invisible maar functioneel
+    pagina = st.radio(
+        label="pagina",
+        options=PAGINA_OPTIES,
+        label_visibility="collapsed",
+        key="nav_radio",
+    )
+
+    # Visuele nav-links als HTML (overschrijven de lelijke radio buttons via CSS)
+    nav_html = "<div style='margin-bottom:4px;'>"
+    for p in PAGINA_OPTIES:
+        actief = "active" if pagina == p else ""
+        nav_html += (
+            f'<div class="nav-link {actief}" '
+            f'onclick="window.parent.document.querySelectorAll(\'[data-testid=stSidebar] input[type=radio]\')[{PAGINA_OPTIES.index(p)}].click()">'
+            f'{PAGINA_ICONS[p]}'
+            f'<span>{p}</span>'
+            f'</div>'
+        )
+    nav_html += "</div>"
+
     st.markdown(
         "<p style='font-size:0.65rem;letter-spacing:0.12em;color:#2a5c38;"
         "margin:0 0 4px 4px;'>NAVIGATIE</p>",
         unsafe_allow_html=True,
     )
-    pagina = st.radio(
-        label="pagina",
-        options=["Home", "Browser", "Analyser", "Reports"],
-        label_visibility="collapsed",
+    # Verberg de echte radio-knoppen volledig
+    st.markdown(
+        "<style>[data-testid='stSidebar'] .stRadio { display:none !important; }</style>",
+        unsafe_allow_html=True,
     )
+    st.markdown(nav_html, unsafe_allow_html=True)
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -575,25 +605,31 @@ if pagina == "Home":
             kpi(f"Gem. NDVI {st.session_state['ndvi_jaar']}", ndvi_jaar_str, "kies jaar hieronder"),
             unsafe_allow_html=True,
         )
-        # Horizontale radio-knoppen als jaar-selector (geen slider met rode balk)
+        # Jaar-knoppen: 1 rij, wit = niet geselecteerd, groen = geselecteerd
         st.markdown(
             """
             <style>
-            div[data-testid="stRadio"] > div { flex-direction: row !important; gap: 6px; }
+            div[data-testid="stRadio"][key="ndvi_jaar"] > div,
+            div[data-testid="stRadio"] > div[role="radiogroup"] {
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                gap: 6px !important;
+            }
             div[data-testid="stRadio"] label {
                 font-size: 0.72rem !important;
-                padding: 2px 8px !important;
-                border: 1px solid #1a3320;
-                border-radius: 20px;
-                color: #888 !important;
-                cursor: pointer;
+                padding: 3px 10px !important;
+                border: 1px solid #555 !important;
+                border-radius: 20px !important;
+                color: #ffffff !important;
+                cursor: pointer !important;
+                white-space: nowrap !important;
             }
             div[data-testid="stRadio"] label:has(input:checked) {
                 border-color: #00FF41 !important;
                 color: #00FF41 !important;
                 font-weight: 700 !important;
             }
-            div[data-testid="stRadio"] input[type="radio"] { display: none !important; }
+            div[data-testid="stRadio"] label > div:first-child { display: none !important; }
             </style>
             """,
             unsafe_allow_html=True,
