@@ -463,26 +463,20 @@ with st.sidebar:
     # Ruimte tussen logo/slogan en navigatiemenu
     st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
 
-    # Navigatiemenu — SVG-icoontjes + klikbare links via query_params
-    PAGINA_OPTIES = ["Home", "Browser", "Analyser", "Reports"]
-    PAGINA_ICONS = {
-        "Home":     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
-        "Browser":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
-        "Analyser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
-        "Reports":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-    }
-
-    # Navigatiemenu — st.radio met volledige CSS override
+    # ── Navigatiemenu ──────────────────────────────────────────
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "Home"
 
     PAGINA_OPTIES = ["Home", "Browser", "Analyser", "Reports"]
-    PAGINA_ICONS = {
-        "Home":     "⌂",
-        "Browser":  "⊞",
-        "Analyser": "∿",
-        "Reports":  "≡",
-    }
+
+    def _nav_icon(naam, kleur):
+        icons = {
+            "Home":     f'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{kleur}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+            "Browser":  f'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{kleur}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+            "Analyser": f'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{kleur}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+            "Reports":  f'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="{kleur}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        }
+        return icons[naam]
 
     st.markdown(
         "<p style='font-size:0.65rem;letter-spacing:0.12em;color:#2a5c38;"
@@ -490,52 +484,43 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    # Één st.radio — volledig gestyled via CSS
+    # Nav-items als klikbare HTML-divs — st.button eronder als trigger
     st.markdown("""
     <style>
-    /* Verberg het standaard radio-bolletje */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label > div:first-child {
-        display: none !important;
-    }
-    /* Elk menu-item */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label {
-        display: flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        padding: 8px 10px !important;
-        border-radius: 7px !important;
+    /* Verberg de lelijke Streamlit-knoppen volledig */
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {
+        position: absolute !important;
+        opacity: 0 !important;
+        height: 38px !important;
+        margin-top: -38px !important;
         cursor: pointer !important;
-        margin-bottom: 2px !important;
-        background: transparent !important;
-        width: 100% !important;
+        z-index: 10 !important;
     }
-    /* Niet-geselecteerd: wit */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label > div:last-child {
-        color: #ffffff !important;
-        font-size: 0.88rem !important;
-        font-weight: 400 !important;
-    }
-    /* Geselecteerd: groen + achtergrond */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:has(input:checked) {
-        background: rgba(0,255,65,0.08) !important;
-    }
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:has(input:checked) > div:last-child {
-        color: #00FF41 !important;
-        font-weight: 700 !important;
-    }
-    /* Hover */
-    [data-testid="stSidebar"] .stRadio div[role="radiogroup"] > label:hover {
-        background: rgba(255,255,255,0.05) !important;
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"]:hover {
+        opacity: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    pagina = st.radio(
-        label="pagina",
-        options=PAGINA_OPTIES,
-        label_visibility="collapsed",
-        key="pagina",
-    )
+    for p in PAGINA_OPTIES:
+        actief  = st.session_state["pagina"] == p
+        kleur   = "#00FF41" if actief else "#ffffff"
+        gewicht = "700" if actief else "400"
+        bg      = "rgba(0,255,65,0.08)" if actief else "transparent"
+        icoon   = _nav_icon(p, kleur)
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;'
+            f'border-radius:7px;background:{bg};margin-bottom:2px;pointer-events:none;">'
+            f'{icoon}'
+            f'<span style="font-size:0.88rem;color:{kleur};font-weight:{gewicht};">{p}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+        if st.button(p, key=f"nav_{p}", use_container_width=True):
+            st.session_state["pagina"] = p
+            st.rerun()
+
+    pagina = st.session_state["pagina"]
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -642,17 +627,17 @@ if pagina == "Home":
         st.markdown(
             """
             <style>
-            /* Alleen de jaar-radio — niet de sidebar nav */
-            [data-testid="stMain"] div[data-testid="stRadio"] > label {
-                display: none !important;
-            }
-            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] {
+            /* Jaar-knoppen: horizontale pills */
+            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"],
+            div[data-testid="stRadio"] div[role="radiogroup"] {
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 gap: 6px !important;
                 padding: 4px 0 !important;
             }
-            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label {
+            /* Niet geselecteerd: grijs */
+            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label,
+            div[data-testid="stRadio"] div[role="radiogroup"] > label {
                 border: 1px solid #444444 !important;
                 border-radius: 20px !important;
                 padding: 3px 11px !important;
@@ -662,12 +647,15 @@ if pagina == "Home":
                 cursor: pointer !important;
                 white-space: nowrap !important;
             }
-            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {
+            /* Geselecteerd: groen */
+            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
+            div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {
                 border-color: #00FF41 !important;
                 color: #00FF41 !important;
                 font-weight: 700 !important;
             }
-            [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
+            /* Verberg radio-bolletje */
+            div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
                 display: none !important;
             }
             </style>
