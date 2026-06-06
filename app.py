@@ -635,24 +635,29 @@ if pagina == "Home":
                 gap: 6px !important;
                 padding: 4px 0 !important;
             }
-            /* Niet geselecteerd: grijs */
+            /* Niet geselecteerd: lichter grijs */
             [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label,
             div[data-testid="stRadio"] div[role="radiogroup"] > label {
-                border: 1px solid #444444 !important;
+                border: 1px solid #777777 !important;
                 border-radius: 20px !important;
                 padding: 3px 11px !important;
                 font-size: 0.72rem !important;
-                color: #888888 !important;
+                color: #bbbbbb !important;
                 background: transparent !important;
                 cursor: pointer !important;
                 white-space: nowrap !important;
             }
-            /* Geselecteerd: groen */
+            /* Geselecteerd: groen — label én tekst erin */
             [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
             div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {
                 border-color: #00FF41 !important;
                 color: #00FF41 !important;
                 font-weight: 700 !important;
+            }
+            div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) p,
+            div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) span,
+            div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) div {
+                color: #00FF41 !important;
             }
             /* Verberg radio-bolletje */
             div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
