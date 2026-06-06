@@ -222,11 +222,24 @@ def _check_login() -> bool:
             border: 1px solid #0f3020;
             border-radius: 14px;
             padding: 36px 32px 12px 32px;
+            text-align: center;
         }
 
-        /* Logo: drop-shadow zodat witte letters zichtbaar zijn op donkere bg */
+        /* Logo: gecentreerd met drop-shadow */
+        .login-logo-box {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
         .login-logo-box img {
             filter: drop-shadow(0 0 6px rgba(0,255,65,0.25));
+        }
+
+        .login-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 16px;
+            text-align: center;
         }
 
         .login-slogan {
@@ -267,7 +280,6 @@ def _check_login() -> bool:
     st.markdown(
         f'<div class="login-wrap">'
         f'{_login_logo("BM_LOGO_TRANSP.png")}'
-        f'<p class="login-slogan">Numbers for nature</p>'
         f'<p class="login-title">Inloggen</p>'
         f'</div>',
         unsafe_allow_html=True,
