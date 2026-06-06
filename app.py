@@ -579,19 +579,25 @@ if pagina == "Home":
         st.markdown(
             """
             <style>
-            /* Volledige slider-track grijs, alleen de thumb groen */
-            div[data-testid="stSlider"] [data-baseweb="slider"] div[role="progressbar"] {
-                background-color: #444444 !important;
-            }
-            div[data-testid="stSlider"] [data-baseweb="slider"] div[class*="Track"] {
-                background-color: #444444 !important;
-            }
-            div[data-testid="stSlider"] [data-baseweb="slider"] div[class*="Track"] > div {
-                background-color: #444444 !important;
-            }
-            div[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] {
+            /* Slider thumb groen */
+            div[data-testid="stSlider"] div[role="slider"] {
                 background-color: #00FF41 !important;
                 border-color: #00FF41 !important;
+            }
+            /* Alle track-segmenten grijs — ook het rode gevulde deel */
+            div[data-testid="stSlider"] div[data-testid="stSliderTrack"] > div {
+                background: #555555 !important;
+            }
+            div[data-testid="stSlider"] div[data-testid="stSliderTrack"] {
+                background: #555555 !important;
+            }
+            /* Breed net uitwerpen op BaseWeb track internals */
+            div[data-testid="stSlider"] [class*="Track"],
+            div[data-testid="stSlider"] [class*="track"],
+            div[data-testid="stSlider"] [class*="Fill"],
+            div[data-testid="stSlider"] [class*="fill"] {
+                background-color: #555555 !important;
+                background: #555555 !important;
             }
             </style>
             """,
