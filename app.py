@@ -194,33 +194,54 @@ def _check_login() -> bool:
         return True
 
     # ── Loginscherm ────────────────────────────────────────────
-    # Verberg sidebar volledig op het loginscherm
     st.markdown(
         """
         <style>
-        [data-testid="stSidebar"] { display: none !important; }
+        /* Verberg sidebar, toolbar en deploy-knop volledig */
+        [data-testid="stSidebar"]          { display: none !important; }
+        [data-testid="stToolbar"]          { display: none !important; }
+        [data-testid="stDecoration"]       { display: none !important; }
+        [data-testid="stStatusWidget"]     { display: none !important; }
+        header[data-testid="stHeader"]     { display: none !important; }
+        #MainMenu                          { display: none !important; }
+        footer                             { display: none !important; }
+
+        /* Pagina volledig donker */
+        [data-testid="stAppViewContainer"] {
+            background: #050f08 !important;
+        }
+        [data-testid="block-container"] {
+            padding-top: 0 !important;
+        }
+
+        /* Login-kaart — volledig zelfstandig gecentreerd */
         .login-wrap {
-            max-width: 380px;
-            margin: 80px auto 0 auto;
+            max-width: 360px;
+            margin: 60px auto 0 auto;
             background: #0a0a0a;
             border: 1px solid #0f3020;
             border-radius: 14px;
-            padding: 40px 36px 32px 36px;
+            padding: 36px 32px 12px 32px;
         }
-        .login-logo { text-align: left; margin-bottom: 4px; }
+
+        /* Logo: drop-shadow zodat witte letters zichtbaar zijn op donkere bg */
+        .login-logo-box img {
+            filter: drop-shadow(0 0 6px rgba(0,255,65,0.25));
+        }
+
         .login-slogan {
-            font-size: 0.58rem;
+            font-size: 0.55rem;
             letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #ffffff;
-            opacity: 0.5;
-            margin: 0 0 28px 0;
+            opacity: 0.45;
+            margin: 0 0 24px 0;
         }
         .login-title {
-            font-size: 1.0rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: #ffffff;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
         </style>
         """,
@@ -229,28 +250,32 @@ def _check_login() -> bool:
 
     # Logo laden als base64
     import base64, pathlib
-    def _login_logo(pad: str, w: str = "45%") -> str:
+    def _login_logo(pad: str, w: str = "140px") -> str:
         try:
             data = pathlib.Path(pad).read_bytes()
             b64  = base64.b64encode(data).decode()
             return (
+                f'<div class="login-logo-box">'
                 f'<img src="data:image/png;base64,{b64}" '
-                f'style="max-width:{w};height:auto;display:block;">'
+                f'style="width:{w};height:auto;display:block;">'
+                f'</div>'
             )
         except Exception:
             return "<span style='color:#00FF41;font-weight:900;font-size:1.3rem;'>biomatrix</span>"
 
-    # Gecentreerde logincard via kolommen
-    _, mid, _ = st.columns([1, 1.6, 1])
-    with mid:
-        st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="login-logo">{_login_logo("BM_LOGO_TRANSP.png")}</div>'
-            f'<p class="login-slogan">Numbers for nature</p>'
-            f'<p class="login-title">Inloggen</p>',
-            unsafe_allow_html=True,
-        )
+    # Loginkaart gecentreerd via CSS — geen st.columns (die maken lege boxes)
+    st.markdown(
+        f'<div class="login-wrap">'
+        f'{_login_logo("BM_LOGO_TRANSP.png")}'
+        f'<p class="login-slogan">Numbers for nature</p>'
+        f'<p class="login-title">Inloggen</p>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
+    # Formulier-elementen in een smalle kolom gecentreerd
+    _, mid, _ = st.columns([1, 1.4, 1])
+    with mid:
         wachtwoord = st.text_input(
             "Wachtwoord",
             type="password",
@@ -272,8 +297,6 @@ def _check_login() -> bool:
                 "Onjuist wachtwoord. Probeer opnieuw.</p>",
                 unsafe_allow_html=True,
             )
-
-        st.markdown("</div>", unsafe_allow_html=True)
 
     st.stop()   # Alles hieronder wordt NIET uitgevoerd totdat ingelogd
 
