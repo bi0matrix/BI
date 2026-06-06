@@ -487,7 +487,7 @@ with st.sidebar:
     # Nav-items als klikbare HTML-divs — st.button eronder als trigger
     st.markdown("""
     <style>
-    /* Verberg de lelijke Streamlit-knoppen volledig */
+    /* Verberg de knoptekst — alleen de HTML-div eronder is zichtbaar */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {
         position: absolute !important;
         opacity: 0 !important;
@@ -496,8 +496,11 @@ with st.sidebar:
         cursor: pointer !important;
         z-index: 10 !important;
     }
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"]:hover {
-        opacity: 0 !important;
+    /* Verberg ook de tekst binnen de button expliciet */
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] p,
+    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] span {
+        color: transparent !important;
+        font-size: 0 !important;
     }
     </style>
     """, unsafe_allow_html=True)
