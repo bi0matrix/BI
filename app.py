@@ -445,7 +445,7 @@ with st.sidebar:
                 f'<img src="data:{mime};base64,{b64}" id="bm-logo" '
                 f'style="max-width:{max_w};width:{max_w};height:auto;display:block;">'
                 f'<p style="font-size:0.50rem;letter-spacing:0.16em;text-transform:uppercase;'
-                f'color:#ffffff;opacity:0.50;margin:3px 0 0 1px;'
+                f'color:#ffffff;opacity:0.50;margin:3px 0 0 0px;'
                 f'text-align:left;">Numbers for nature</p>'
                 f'</div>'
             )
@@ -472,47 +472,68 @@ with st.sidebar:
         "Reports":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
     }
 
-    # Actieve icoon: groen stroke
-    PAGINA_ICONS_ACTIVE = {
-        "Home":     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
-        "Browser":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
-        "Analyser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
-        "Reports":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
-    }
+    # Navigatiemenu — st.button per pagina, betrouwbaar en stijlbaar
+    if "pagina" not in st.session_state:
+        st.session_state["pagina"] = "Home"
 
-    # Verborgen radio voor Streamlit state — invisible maar functioneel
-    pagina = st.radio(
-        label="pagina",
-        options=PAGINA_OPTIES,
-        label_visibility="collapsed",
-        key="nav_radio",
+    # Verberg standaard button-stijl, vervang door nav-link look
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] .stRadio { display:none !important; }
+        [data-testid="stSidebar"] div[data-testid="stVerticalBlock"]
+            > div[data-testid="stVerticalBlock"]
+            button[kind="secondary"] {
+            background: transparent !important;
+            border: none !important;
+            padding: 7px 8px !important;
+            text-align: left !important;
+            width: 100% !important;
+            color: #ffffff !important;
+            font-size: 0.86rem !important;
+            border-radius: 7px !important;
+            font-weight: 400 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
     )
-
-    # Visuele nav-links als HTML (overschrijven de lelijke radio buttons via CSS)
-    nav_html = "<div style='margin-bottom:4px;'>"
-    for p in PAGINA_OPTIES:
-        actief = "active" if pagina == p else ""
-        icoon = PAGINA_ICONS_ACTIVE[p] if pagina == p else PAGINA_ICONS[p]
-        nav_html += (
-            f'<div class="nav-link {actief}" '
-            f'onclick="window.parent.document.querySelectorAll(\'[data-testid=stSidebar] input[type=radio]\')[{PAGINA_OPTIES.index(p)}].click()">'
-            f'{icoon}'
-            f'<span>{p}</span>'
-            f'</div>'
-        )
-    nav_html += "</div>"
 
     st.markdown(
         "<p style='font-size:0.65rem;letter-spacing:0.12em;color:#2a5c38;"
         "margin:0 0 4px 4px;'>NAVIGATIE</p>",
         unsafe_allow_html=True,
     )
-    # Verberg de echte radio-knoppen volledig
-    st.markdown(
-        "<style>[data-testid='stSidebar'] .stRadio { display:none !important; }</style>",
-        unsafe_allow_html=True,
-    )
-    st.markdown(nav_html, unsafe_allow_html=True)
+
+    PAGINA_OPTIES = ["Home", "Browser", "Analyser", "Reports"]
+    PAGINA_ICONS = {
+        "Home":     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="KLEUR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+        "Browser":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="KLEUR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+        "Analyser": '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="KLEUR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+        "Reports":  '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="KLEUR" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+    }
+
+    for p in PAGINA_OPTIES:
+        actief = st.session_state["pagina"] == p
+        kleur  = "#00FF41" if actief else "#ffffff"
+        gewicht = "700" if actief else "400"
+        bg     = "rgba(0,255,65,0.07)" if actief else "transparent"
+        icoon  = PAGINA_ICONS[p].replace("KLEUR", kleur)
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;'
+            f'border-radius:7px;background:{bg};margin-bottom:2px;cursor:pointer;">',
+            unsafe_allow_html=True,
+        )
+        if st.button(
+            f"​{p}",   # zero-width space zodat label niet leeg is
+            key=f"nav_{p}",
+            use_container_width=True,
+        ):
+            st.session_state["pagina"] = p
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    pagina = st.session_state["pagina"]
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
