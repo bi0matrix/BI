@@ -100,11 +100,8 @@ st.markdown(
         font-weight: 700;
         background: rgba(0,255,65,0.07);
     }
-    .nav-link svg {
-        flex-shrink: 0;
-        opacity: 0.85;
-    }
-    .nav-link.active svg { opacity: 1; }
+    .nav-link svg { flex-shrink: 0; }
+    .nav-link.active svg { stroke: #00FF41 !important; }
 
     /* ── HR in sidebar ── */
     [data-testid="stSidebar"] hr {
@@ -444,32 +441,43 @@ with st.sidebar:
             ext  = pathlib.Path(pad).suffix.lstrip(".")
             mime = "image/png" if ext in ("png", "") else f"image/{ext}"
             return (
-                f'<div style="padding:4px 12px 0 12px;">'
+                f'<div style="padding:8px 12px 0 12px;">'
                 f'<img src="data:{mime};base64,{b64}" id="bm-logo" '
                 f'style="max-width:{max_w};width:{max_w};height:auto;display:block;">'
-                f'<p style="font-size:0.52rem;letter-spacing:0.16em;text-transform:uppercase;'
-                f'color:#ffffff;opacity:0.55;margin:2px 0 12px 0;'
-                f'width:{max_w};text-align:left;">Numbers for nature</p>'
+                f'<p style="font-size:0.50rem;letter-spacing:0.16em;text-transform:uppercase;'
+                f'color:#ffffff;opacity:0.50;margin:3px 0 0 1px;'
+                f'text-align:left;">Numbers for nature</p>'
                 f'</div>'
             )
         except Exception:
             return (
-                "<div style='padding:4px 12px 0 12px;'>"
+                "<div style='padding:8px 12px 0 12px;'>"
                 "<span style='color:#00FF41;font-weight:900;font-size:1.2rem;"
                 "letter-spacing:0.05em;'>biomatrix</span>"
-                "<p style='font-size:0.52rem;color:#fff;opacity:0.55;"
-                "letter-spacing:0.16em;'>Numbers for nature</p></div>"
+                "<p style='font-size:0.50rem;color:#fff;opacity:0.50;"
+                "margin:3px 0 0 1px;letter-spacing:0.16em;text-align:left;'>Numbers for nature</p></div>"
             )
 
     st.markdown(_logo_html("BM_LOGO_TRANSP.png", max_w="50%"), unsafe_allow_html=True)
 
+    # Ruimte tussen logo/slogan en navigatiemenu
+    st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
+
     # Navigatiemenu — SVG-icoontjes + klikbare links via query_params
     PAGINA_OPTIES = ["Home", "Browser", "Analyser", "Reports"]
     PAGINA_ICONS = {
-        "Home": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
-        "Browser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
-        "Analyser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
-        "Reports": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+        "Home":     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+        "Browser":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+        "Analyser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+        "Reports":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+    }
+
+    # Actieve icoon: groen stroke
+    PAGINA_ICONS_ACTIVE = {
+        "Home":     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>',
+        "Browser":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
+        "Analyser": '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',
+        "Reports":  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00FF41" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
     }
 
     # Verborgen radio voor Streamlit state — invisible maar functioneel
@@ -484,10 +492,11 @@ with st.sidebar:
     nav_html = "<div style='margin-bottom:4px;'>"
     for p in PAGINA_OPTIES:
         actief = "active" if pagina == p else ""
+        icoon = PAGINA_ICONS_ACTIVE[p] if pagina == p else PAGINA_ICONS[p]
         nav_html += (
             f'<div class="nav-link {actief}" '
             f'onclick="window.parent.document.querySelectorAll(\'[data-testid=stSidebar] input[type=radio]\')[{PAGINA_OPTIES.index(p)}].click()">'
-            f'{PAGINA_ICONS[p]}'
+            f'{icoon}'
             f'<span>{p}</span>'
             f'</div>'
         )
@@ -609,27 +618,31 @@ if pagina == "Home":
         st.markdown(
             """
             <style>
-            div[data-testid="stRadio"][key="ndvi_jaar"] > div,
-            div[data-testid="stRadio"] > div[role="radiogroup"] {
+            div[data-testid="stRadio"] > label { display: none !important; }
+            div[data-testid="stRadio"] > div {
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 gap: 6px !important;
+                padding: 4px 0 !important;
             }
-            div[data-testid="stRadio"] label {
-                font-size: 0.72rem !important;
-                padding: 3px 10px !important;
-                border: 1px solid #555 !important;
+            div[data-testid="stRadio"] > div > label {
+                border: 1px solid #555555 !important;
                 border-radius: 20px !important;
-                color: #ffffff !important;
+                padding: 3px 11px !important;
+                font-size: 0.72rem !important;
+                color: #aaaaaa !important;
+                background: transparent !important;
                 cursor: pointer !important;
                 white-space: nowrap !important;
             }
-            div[data-testid="stRadio"] label:has(input:checked) {
+            div[data-testid="stRadio"] > div > label:has(input:checked) {
                 border-color: #00FF41 !important;
                 color: #00FF41 !important;
                 font-weight: 700 !important;
             }
-            div[data-testid="stRadio"] label > div:first-child { display: none !important; }
+            div[data-testid="stRadio"] > div > label > div:first-child {
+                display: none !important;
+            }
             </style>
             """,
             unsafe_allow_html=True,
