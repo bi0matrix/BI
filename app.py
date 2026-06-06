@@ -487,20 +487,35 @@ with st.sidebar:
     # Nav-items als klikbare HTML-divs — st.button eronder als trigger
     st.markdown("""
     <style>
-    /* Verberg de knoptekst — alleen de HTML-div eronder is zichtbaar */
+    /* Onzichtbare button — geen extra ruimte */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {
         position: absolute !important;
         opacity: 0 !important;
-        height: 38px !important;
-        margin-top: -38px !important;
+        height: 36px !important;
+        margin-top: -36px !important;
         cursor: pointer !important;
         z-index: 10 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
     }
-    /* Verberg ook de tekst binnen de button expliciet */
+    [data-testid="stSidebar"] div:has(> [data-testid="stBaseButton-secondary"]) {
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 0 !important;
+    }
+    /* Verberg knoptekst */
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] p,
     [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] span {
         color: transparent !important;
         font-size: 0 !important;
+    }
+    /* Actief nav-item tekst GROEN — overschrijft de globale sidebar * regel */
+    [data-testid="stSidebar"] div.nav-active span {
+        color: #00FF41 !important;
+    }
+    /* Niet-actief nav-item tekst WIT */
+    [data-testid="stSidebar"] div.nav-inactive span {
+        color: #ffffff !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -510,12 +525,14 @@ with st.sidebar:
         kleur   = "#00FF41" if actief else "#ffffff"
         gewicht = "700" if actief else "400"
         bg      = "rgba(0,255,65,0.08)" if actief else "transparent"
+        css_cls = "nav-active" if actief else "nav-inactive"
         icoon   = _nav_icon(p, kleur)
         st.markdown(
-            f'<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;'
-            f'border-radius:7px;background:{bg};margin-bottom:2px;pointer-events:none;">'
+            f'<div class="{css_cls}" style="display:flex;align-items:center;gap:10px;'
+            f'padding:7px 8px;border-radius:7px;background:{bg};margin-bottom:2px;'
+            f'pointer-events:none;">'
             f'{icoon}'
-            f'<span style="font-size:0.88rem;color:{kleur};font-weight:{gewicht};">{p}</span>'
+            f'<span style="font-size:0.88rem;font-weight:{gewicht};">{p}</span>'
             f'</div>',
             unsafe_allow_html=True,
         )
