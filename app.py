@@ -535,12 +535,12 @@ if pagina == "Home":
     with c3:
         ndvi_jaren_sorted = sorted(df_ndvi["Jaar"].unique())
         default_jaar = 2025 if 2025 in ndvi_jaren_sorted else ndvi_jaren_sorted[-1]
-        if "ndvi_jaar" not in st.session_state:
-            st.session_state["ndvi_jaar"] = default_jaar
-        ndvi_jaar_val = df_ndvi[df_ndvi["Jaar"] == st.session_state["ndvi_jaar"]]["NDVI"].mean()
+        default_index = ndvi_jaren_sorted.index(default_jaar)
+        huidig_jaar = st.session_state.get("ndvi_jaar", default_jaar)
+        ndvi_jaar_val = df_ndvi[df_ndvi["Jaar"] == huidig_jaar]["NDVI"].mean()
         ndvi_jaar_str = f"{ndvi_jaar_val:.3f}" if not pd.isna(ndvi_jaar_val) else "–"
         st.markdown(
-            kpi(f"Gem. NDVI {st.session_state['ndvi_jaar']}", ndvi_jaar_str, "kies jaar hieronder"),
+            kpi(f"Gem. NDVI {huidig_jaar}", ndvi_jaar_str, "kies jaar hieronder"),
             unsafe_allow_html=True,
         )
         st.markdown(
@@ -585,7 +585,7 @@ if pagina == "Home":
         gekozen_ndvi_jaar = st.radio(
             "NDVI jaar",
             options=ndvi_jaren_sorted,
-            index=ndvi_jaren_sorted.index(st.session_state["ndvi_jaar"]),
+            index=default_index,
             horizontal=True,
             label_visibility="collapsed",
             key="ndvi_jaar",
