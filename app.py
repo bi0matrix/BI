@@ -1,17 +1,12 @@
 """
-biomatrix BI-demo — versie 2.1
+biomatrix BI-demo — versie 2.2
 ================================
-Wijzigingen t.o.v. v2.0:
-  - Nieuw logo: BM_LOGO_TRANSP.png (transparant, op zwarte sidebar)
-  - Slogan 'Numbers for nature' in wit onder het logo
-  - Sidebar-achtergrond: donker groen-zwart kleurverloop
-  - Menu-icoontjes verwijderd → puur witte tekst
-  - Grafiekachtergronden: donkergroen tint i.p.v. zwart
-  - Browser: extra filters soortgroep → soort (met Latijnse naam)
-  - Bij soort-selectie: afbeelding ophalen via Google Custom Search
+Wijzigingen t.o.v. v2.1:
+  - Data inladen via Parquet i.p.v. CSV (NDFF_gecombineerd_mini.parquet)
+  - Kolommen Stadium en Gedrag verwijderd uit Browser-weergave (niet in mini-parquet)
 
 Vereisten:
-    pip install streamlit pandas plotly requests
+    pip install streamlit pandas plotly requests pyarrow
 
 Starten:
     streamlit run app.py
@@ -35,9 +30,9 @@ st.set_page_config(
 # ──────────────────────────────────────────────────────────────
 # GRAFIEK-ACHTERGRONDKLEUR  (donker groen-tint)
 # ──────────────────────────────────────────────────────────────
-PLOT_BG    = "#071a0f"   # diep donkergroen voor plot area
-PAPER_BG   = "#071a0f"   # zelfde voor paper
-GRID_COLOR = "#0f2d18"   # subtiele gridlijnen
+PLOT_BG    = "#071a0f"
+PAPER_BG   = "#071a0f"
+GRID_COLOR = "#0f2d18"
 
 # ──────────────────────────────────────────────────────────────
 # GLOBALE CSS
@@ -45,15 +40,12 @@ GRID_COLOR = "#0f2d18"   # subtiele gridlijnen
 st.markdown(
     """
     <style>
-    /* ── Sidebar: donker groen-zwart verloop ── */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #000000 0%, #021a09 60%, #000000 100%) !important;
     }
     [data-testid="stSidebar"] * {
         color: #e0e0e0 !important;
     }
-
-    /* ── Logo-sectie: geen witte box, logo direct op donkere achtergrond ── */
     .logo-wrap {
         padding: 6px 20px 0px 20px;
         display: flex;
@@ -62,8 +54,6 @@ st.markdown(
         justify-content: center;
     }
     .logo-wrap img { max-width: 50%; height: auto; }
-
-    /* ── Slogan BOVEN logo ── */
     .bm-slogan {
         color: #ffffff !important;
         font-size: 0.52rem;
@@ -73,13 +63,9 @@ st.markdown(
         margin: 8px 0 2px 0;
         opacity: 0.55;
     }
-
-    /* ── Sidebar sectielabel ── */
     [data-testid="stSidebar"] .stRadio > label {
         display: none;
     }
-
-    /* ── Sidebar nav-links ── */
     .nav-link {
         display: flex;
         align-items: center;
@@ -102,29 +88,21 @@ st.markdown(
     }
     .nav-link svg { flex-shrink: 0; }
     .nav-link.active svg { stroke: #00FF41 !important; }
-
-    /* ── HR in sidebar ── */
     [data-testid="stSidebar"] hr {
         border-color: #1a3320 !important;
         margin: 10px 0;
     }
-
-    /* ── Sidebar selectbox ── */
     [data-testid="stSidebar"] [data-baseweb="select"] * {
         background-color: #0a1f0f !important;
         border-color: #1a3320 !important;
         color: #e0e0e0 !important;
     }
-
-    /* ── Paginatitels compact ── */
     h1 { font-size:1.45rem !important; font-weight:700 !important;
          letter-spacing:-0.01em !important; margin:0.2rem 0 !important; }
     h2 { font-size:1.05rem !important; font-weight:600 !important;
          margin:1.2rem 0 0.3rem 0 !important; }
     h3 { font-size:0.92rem !important; font-weight:600 !important;
          margin:0.8rem 0 0 0 !important; }
-
-    /* ── KPI-kaart ── */
     .kpi-card {
         background: #071a0f;
         border: 1px solid #0f3020;
@@ -137,16 +115,10 @@ st.markdown(
                  letter-spacing:0.08em; color:#558866; margin-bottom:6px; }
     .kpi-value { font-size:2.1rem; font-weight:800; color:#00FF41; line-height:1; }
     .kpi-sub   { font-size:0.70rem; color:#3a5c45; margin-top:4px; }
-
-    /* ── Metric accent ── */
     [data-testid="metric-container"] [data-testid="stMetricValue"] {
         color: #00FF41 !important; font-weight:800 !important;
     }
-
-    /* ── Divider ── */
     .bm-divider { border:none; border-top:1px solid #0f2d18; margin:1rem 0; }
-
-    /* ── Soort-info kaart ── */
     .soort-card {
         background: #071a0f;
         border: 1px solid #0f3020;
@@ -162,26 +134,14 @@ st.markdown(
 )
 
 # ──────────────────────────────────────────────────────────────
-# AUTHENTICATIE — wachtwoord via st.secrets
-# Stel in via Streamlit Cloud → App Settings → Secrets:
-#   [auth]
-#   password = "jouw-wachtwoord"
-# Of lokaal via .streamlit/secrets.toml met dezelfde inhoud.
+# AUTHENTICATIE
 # ──────────────────────────────────────────────────────────────
-
 def _check_login() -> bool:
-    """
-    Toont een loginscherm als de gebruiker nog niet geauthenticeerd is.
-    Geeft True terug als inloggen geslaagd is, anders stopt de app hier.
-    """
-    # Haal wachtwoord op uit secrets (veilig, nooit in code)
     try:
         correct_pw = st.secrets["auth"]["password"]
     except Exception:
-        # Fallback voor lokaal draaien zonder secrets.toml
         correct_pw = "natuurlijk!"
 
-    # Sessie-status bijhouden
     if "authenticated" not in st.session_state:
         st.session_state["authenticated"] = False
     if "login_error" not in st.session_state:
@@ -190,11 +150,9 @@ def _check_login() -> bool:
     if st.session_state["authenticated"]:
         return True
 
-    # ── Loginscherm ────────────────────────────────────────────
     st.markdown(
         """
         <style>
-        /* Verberg sidebar, toolbar en deploy-knop volledig */
         [data-testid="stSidebar"]          { display: none !important; }
         [data-testid="stToolbar"]          { display: none !important; }
         [data-testid="stDecoration"]       { display: none !important; }
@@ -202,16 +160,8 @@ def _check_login() -> bool:
         header[data-testid="stHeader"]     { display: none !important; }
         #MainMenu                          { display: none !important; }
         footer                             { display: none !important; }
-
-        /* Pagina volledig donker */
-        [data-testid="stAppViewContainer"] {
-            background: #050f08 !important;
-        }
-        [data-testid="block-container"] {
-            padding-top: 0 !important;
-        }
-
-        /* Login-kaart — volledig zelfstandig gecentreerd */
+        [data-testid="stAppViewContainer"] { background: #050f08 !important; }
+        [data-testid="block-container"]    { padding-top: 0 !important; }
         .login-wrap {
             max-width: 360px;
             margin: 60px auto 0 auto;
@@ -221,8 +171,6 @@ def _check_login() -> bool:
             padding: 36px 32px 12px 32px;
             text-align: center;
         }
-
-        /* Logo: gecentreerd met drop-shadow */
         .login-logo-box {
             display: inline-block;
             margin-bottom: 20px;
@@ -230,7 +178,6 @@ def _check_login() -> bool:
         .login-logo-box img {
             filter: drop-shadow(0 0 6px rgba(0,255,65,0.25));
         }
-
         .login-title {
             font-size: 0.95rem;
             font-weight: 700;
@@ -238,7 +185,6 @@ def _check_login() -> bool:
             margin-bottom: 16px;
             text-align: center;
         }
-
         .login-slogan {
             font-size: 0.55rem;
             letter-spacing: 0.16em;
@@ -247,18 +193,11 @@ def _check_login() -> bool:
             opacity: 0.45;
             margin: 0 0 24px 0;
         }
-        .login-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 16px;
-        }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-    # Logo laden als base64
     import base64, pathlib
     def _login_logo(pad: str, w: str = "140px") -> str:
         try:
@@ -273,7 +212,6 @@ def _check_login() -> bool:
         except Exception:
             return "<span style='color:#00FF41;font-weight:900;font-size:1.3rem;'>biomatrix</span>"
 
-    # Loginkaart gecentreerd via CSS — geen st.columns (die maken lege boxes)
     st.markdown(
         f'<div class="login-wrap">'
         f'{_login_logo("BM_LOGO_TRANSP.png")}'
@@ -282,7 +220,6 @@ def _check_login() -> bool:
         unsafe_allow_html=True,
     )
 
-    # Formulier-elementen in een smalle kolom gecentreerd
     _, mid, _ = st.columns([1, 1.4, 1])
     with mid:
         wachtwoord = st.text_input(
@@ -291,7 +228,6 @@ def _check_login() -> bool:
             placeholder="Voer wachtwoord in…",
             label_visibility="collapsed",
         )
-
         if st.button("→  Inloggen", use_container_width=True):
             if wachtwoord == correct_pw:
                 st.session_state["authenticated"] = True
@@ -307,18 +243,17 @@ def _check_login() -> bool:
                 unsafe_allow_html=True,
             )
 
-    st.stop()   # Alles hieronder wordt NIET uitgevoerd totdat ingelogd
+    st.stop()
 
 
-# Voer de logincheck uit — app stopt hier als niet geauthenticeerd
 _check_login()
 
 # ──────────────────────────────────────────────────────────────
-# DATA INLADEN
+# DATA INLADEN  ← v2.2: Parquet i.p.v. CSV
 # ──────────────────────────────────────────────────────────────
 @st.cache_data
 def laad_data(pad: str) -> pd.DataFrame:
-    df = pd.read_csv(pad)
+    df = pd.read_parquet(pad)
     df["periode_start"] = pd.to_datetime(
         df["Periode start"], format="%d-%m-%y %H:%M", errors="coerce"
     )
@@ -326,21 +261,14 @@ def laad_data(pad: str) -> pd.DataFrame:
     return df
 
 
-df_raw = laad_data("subset_3.csv")
+df_raw = laad_data("NDFF_gecombineerd_mini.parquet")
 
-# Jaren 2021 en 2026 worden uitgefilterd uit alle analyses
 UITGESLOTEN_JAREN = [2021, 2026]
 df_raw = df_raw[~df_raw["Jaar"].isin(UITGESLOTEN_JAREN)].copy()
 
 
 @st.cache_data
 def laad_ndvi(pad: str) -> pd.DataFrame:
-    """
-    Laad de NDVI-CSV en zet de wide kolommen (NDVI_2020 … NDVI_2026)
-    om naar een long-format tabel: label | Jaar | NDVI.
-    Join-sleutel is 'label', wat overeenkomt met 'Hoknummer' in de bio-data.
-    Jaren 2021 en 2026 worden uitgesloten conform de algemene filterregel.
-    """
     raw = pd.read_csv(pad)
     ndvi_cols = [c for c in raw.columns if c.startswith("NDVI_")]
     long = raw[["label"] + ndvi_cols].melt(
@@ -349,7 +277,6 @@ def laad_ndvi(pad: str) -> pd.DataFrame:
     long["Jaar"] = long["ndvi_col"].str.extract(r"(\d{4})").astype(int)
     long = long.drop(columns="ndvi_col").rename(columns={"label": "Hoknummer"})
     long["NDVI"] = long["NDVI"].round(4)
-    # Alleen jaren 2022 t/m 2025 gebruiken
     long = long[long["Jaar"].between(2022, 2025)]
     return long.sort_values(["Hoknummer", "Jaar"]).reset_index(drop=True)
 
@@ -357,25 +284,17 @@ def laad_ndvi(pad: str) -> pd.DataFrame:
 df_ndvi_raw = laad_ndvi("ndff_unmerged_ndvi_2020_2026.csv")
 
 # ──────────────────────────────────────────────────────────────
-# AFBEELDING OPHALEN via Wikipedia (geen API-key nodig)
+# AFBEELDING OPHALEN via Wikipedia
 # ──────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def zoek_afbeelding(latijnse_naam: str) -> str | None:
-    """
-    Zoekt een afbeelding voor de Latijnse naam via drie bronnen (zonder API-sleutel):
-    1. Wikipedia REST API (page summary thumbnail)
-    2. Wikimedia Commons (pageimages)
-    3. iNaturalist taxon-foto
-    Geeft de eerste gevonden URL terug, of None als alle pogingen mislukken.
-    """
     if not latijnse_naam or pd.isna(latijnse_naam):
         return None
 
     naam = str(latijnse_naam).strip()
     naam_encoded = naam.replace(" ", "_")
-    headers = {"User-Agent": "biomatrix-BI-demo/2.1 (contact@biomatrix.nl)"}
+    headers = {"User-Agent": "biomatrix-BI-demo/2.2 (contact@biomatrix.nl)"}
 
-    # ── 1. Wikipedia page-summary ──────────────────────────────
     try:
         r = requests.get(
             f"https://en.wikipedia.org/api/rest_v1/page/summary/{naam_encoded}",
@@ -388,7 +307,6 @@ def zoek_afbeelding(latijnse_naam: str) -> str | None:
     except Exception:
         pass
 
-    # ── 2. Wikimedia Commons pageimages ────────────────────────
     try:
         r2 = requests.get(
             "https://commons.wikimedia.org/w/api.php",
@@ -408,7 +326,6 @@ def zoek_afbeelding(latijnse_naam: str) -> str | None:
     except Exception:
         pass
 
-    # ── 3. iNaturalist taxon-foto ──────────────────────────────
     try:
         r3 = requests.get(
             "https://api.inaturalist.org/v1/taxa",
@@ -431,7 +348,6 @@ def zoek_afbeelding(latijnse_naam: str) -> str | None:
 # ──────────────────────────────────────────────────────────────
 with st.sidebar:
 
-    # Logo links uitgelijnd met slogan eronder (zelfde breedte) — via base64 HTML
     import base64, pathlib
 
     def _logo_html(pad: str, max_w: str = "50%") -> str:
@@ -459,11 +375,8 @@ with st.sidebar:
             )
 
     st.markdown(_logo_html("BM_LOGO_TRANSP.png", max_w="50%"), unsafe_allow_html=True)
-
-    # Ruimte tussen logo/slogan en navigatiemenu
     st.markdown("<div style='height:22px;'></div>", unsafe_allow_html=True)
 
-    # ── Navigatiemenu ──────────────────────────────────────────
     if "pagina" not in st.session_state:
         st.session_state["pagina"] = "Home"
 
@@ -479,46 +392,42 @@ with st.sidebar:
         return icons[naam]
 
     st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {
+            position: absolute !important;
+            opacity: 0 !important;
+            height: 36px !important;
+            margin-top: -36px !important;
+            cursor: pointer !important;
+            z-index: 10 !important;
+            padding: 0 !important;
+            min-height: 0 !important;
+        }
+        [data-testid="stSidebar"] div:has(> [data-testid="stBaseButton-secondary"]) {
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 0 !important;
+        }
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] p,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] span {
+            color: transparent !important;
+            font-size: 0 !important;
+        }
+        [data-testid="stSidebar"] div.nav-active span {
+            color: #00FF41 !important;
+        }
+        [data-testid="stSidebar"] div.nav-inactive span {
+            color: #ffffff !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+    st.markdown(
         "<p style='font-size:0.65rem;letter-spacing:0.12em;color:#2a5c38;"
         "margin:0 0 4px 4px;'>NAVIGATIE</p>",
         unsafe_allow_html=True,
     )
-
-    # Nav-items als klikbare HTML-divs — st.button eronder als trigger
-    st.markdown("""
-    <style>
-    /* Onzichtbare button — geen extra ruimte */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {
-        position: absolute !important;
-        opacity: 0 !important;
-        height: 36px !important;
-        margin-top: -36px !important;
-        cursor: pointer !important;
-        z-index: 10 !important;
-        padding: 0 !important;
-        min-height: 0 !important;
-    }
-    [data-testid="stSidebar"] div:has(> [data-testid="stBaseButton-secondary"]) {
-        margin: 0 !important;
-        padding: 0 !important;
-        gap: 0 !important;
-    }
-    /* Verberg knoptekst */
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] p,
-    [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] span {
-        color: transparent !important;
-        font-size: 0 !important;
-    }
-    /* Actief nav-item tekst GROEN — overschrijft de globale sidebar * regel */
-    [data-testid="stSidebar"] div.nav-active span {
-        color: #00FF41 !important;
-    }
-    /* Niet-actief nav-item tekst WIT */
-    [data-testid="stSidebar"] div.nav-inactive span {
-        color: #ffffff !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
     for p in PAGINA_OPTIES:
         actief  = st.session_state["pagina"] == p
@@ -544,7 +453,6 @@ with st.sidebar:
 
     st.markdown("<hr>", unsafe_allow_html=True)
 
-    # Globaal locatiefilter
     st.markdown(
         "<p style='font-size:0.65rem;letter-spacing:0.12em;color:#2a5c38;"
         "margin:0 0 4px 4px;'>LOCATIE</p>",
@@ -560,29 +468,27 @@ with st.sidebar:
     st.markdown("<hr>", unsafe_allow_html=True)
     st.markdown(
         "<p style='font-size:0.62rem;color:#1a3320;text-align:center;margin-top:8px;'>"
-        "biomatrix BI-demo v2.1</p>",
+        "biomatrix BI-demo v2.2</p>",
         unsafe_allow_html=True,
     )
 
-    # Uitloggen
     st.markdown("<div style='margin-top:6px;'>", unsafe_allow_html=True)
     if st.button("↩  Uitloggen", use_container_width=True):
         st.session_state["authenticated"] = False
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Globaal locatiefilter toepassen op beide datasets
+# Globaal locatiefilter toepassen
 df = df_raw.copy() if gekozen_locatie == "Alle locaties" \
     else df_raw[df_raw["Hoknummer"] == gekozen_locatie].copy()
 
-# NDVI: filter op dezelfde locaties als de bio-data
 ndvi_hokken = df["Hoknummer"].dropna().unique()
 df_ndvi = df_ndvi_raw[df_ndvi_raw["Hoknummer"].isin(ndvi_hokken)].copy()
 
 GROEN_PALET = ["#00FF41", "#32a852", "#007a2f"]
 
 # ──────────────────────────────────────────────────────────────
-# HULPFUNCTIE KPI
+# HULPFUNCTIES
 # ──────────────────────────────────────────────────────────────
 def kpi(label: str, waarde: str, sub: str = "") -> str:
     return (
@@ -593,11 +499,7 @@ def kpi(label: str, waarde: str, sub: str = "") -> str:
         f"</div>"
     )
 
-# ──────────────────────────────────────────────────────────────
-# HULPFUNCTIE grafiek layout (herbruikbaar)
-# ──────────────────────────────────────────────────────────────
 def groene_layout(fig, height: int = 300, **kwargs):
-    """Pas het donkergroene thema toe op een Plotly figure."""
     fig.update_layout(
         plot_bgcolor=PLOT_BG,
         paper_bgcolor=PAPER_BG,
@@ -625,7 +527,6 @@ if pagina == "Home":
     )
     st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
 
-    # KPI-kaarten
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(kpi("Totaal records", f"{len(df):,}", "waarnemingen"), unsafe_allow_html=True)
@@ -642,12 +543,9 @@ if pagina == "Home":
             kpi(f"Gem. NDVI {st.session_state['ndvi_jaar']}", ndvi_jaar_str, "kies jaar hieronder"),
             unsafe_allow_html=True,
         )
-        # Jaar-knoppen: 1 rij, grijs = niet geselecteerd, groen = geselecteerd
-        # Gebruik data-testid met key om sidebar-radio niet te raken
         st.markdown(
             """
             <style>
-            /* Jaar-knoppen: horizontale pills */
             [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"],
             div[data-testid="stRadio"] div[role="radiogroup"] {
                 flex-direction: row !important;
@@ -655,7 +553,6 @@ if pagina == "Home":
                 gap: 6px !important;
                 padding: 4px 0 !important;
             }
-            /* Niet geselecteerd: lichter grijs */
             [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label,
             div[data-testid="stRadio"] div[role="radiogroup"] > label {
                 border: 1px solid #777777 !important;
@@ -667,7 +564,6 @@ if pagina == "Home":
                 cursor: pointer !important;
                 white-space: nowrap !important;
             }
-            /* Geselecteerd: groen — label én tekst erin */
             [data-testid="stMain"] div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked),
             div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {
                 border-color: #00FF41 !important;
@@ -679,7 +575,6 @@ if pagina == "Home":
             div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) div {
                 color: #00FF41 !important;
             }
-            /* Verberg radio-bolletje */
             div[data-testid="stRadio"] div[role="radiogroup"] > label > div:first-child {
                 display: none !important;
             }
@@ -701,7 +596,6 @@ if pagina == "Home":
     col_l, col_r = st.columns(2)
 
     with col_l:
-        # Eén hok geselecteerd → top 10 soorten; meerdere → records per locatie
         if gekozen_locatie != "Alle locaties":
             st.markdown("#### Top 10 soorten")
             top10_soort = (
@@ -740,7 +634,6 @@ if pagina == "Home":
         groene_layout(fig_sg, height=280)
         st.plotly_chart(fig_sg, use_container_width=True)
 
-    # ── NDVI gemiddelde over de geselecteerde locatie(s) ────────
     st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
     st.markdown("#### Gemiddelde NDVI-score per jaar")
     st.caption("NDVI (Normalized Difference Vegetation Index) — hogere waarde = meer vegetatie. "
@@ -766,7 +659,6 @@ if pagina == "Home":
         marker_line_width=0,
         hovertemplate="Jaar: %{x}<br>Gem. NDVI: %{y:.3f}<extra></extra>",
     )
-    # Grijze grafiekachtergrond, rest donkergroen paper
     fig_ndvi_home.update_layout(
         plot_bgcolor="#3a3a3a",
         paper_bgcolor=PAPER_BG,
@@ -794,7 +686,6 @@ elif pagina == "Browser":
     )
     st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
 
-    # ── Filters naast elkaar: Soortgroep | Soort ────────────────
     bf1, bf2 = st.columns(2)
 
     with bf1:
@@ -804,7 +695,6 @@ elif pagina == "Browser":
         else df[df["Soortgroep"] == gekozen_sg].copy()
 
     with bf2:
-        # Bouw weergavelijst: "Gewone naam (Latijnse naam)"
         soort_df = (
             df_sg_filtered[["Naam soort", "Wetenschappelijke naam"]]
             .drop_duplicates()
@@ -819,20 +709,16 @@ elif pagina == "Browser":
         soort_opties = ["Alle soorten"] + soort_df["label"].tolist()
         gekozen_soort_label = st.selectbox("Soort", options=soort_opties, key="browser_soort")
 
-    # Filter toepassen op soort
     if gekozen_soort_label == "Alle soorten":
         df_browser = df_sg_filtered.copy()
         gekozen_latijn = None
         gekozen_soort_naam = None
     else:
-        # Haal de Nederlandse naam op uit het label
         gekozen_soort_naam = gekozen_soort_label.split("  (")[0]
         df_browser = df_sg_filtered[df_sg_filtered["Naam soort"] == gekozen_soort_naam].copy()
-        # Latijnse naam ophalen
         rij = soort_df[soort_df["Naam soort"] == gekozen_soort_naam]
         gekozen_latijn = rij["Wetenschappelijke naam"].iloc[0] if not rij.empty else None
 
-    # ── Soort-infokaart + afbeelding ────────────────────────
     if gekozen_soort_naam and gekozen_latijn:
         img_col, info_col = st.columns([1, 3])
 
@@ -840,7 +726,6 @@ elif pagina == "Browser":
             with st.spinner("Afbeelding laden…"):
                 img_url = zoek_afbeelding(str(gekozen_latijn))
             if img_url:
-                # Wrapper div zorgt voor gelijke hoogte als de infokaart
                 st.markdown(
                     f"""
                     <div style="height:220px;border-radius:10px;overflow:hidden;
@@ -896,7 +781,6 @@ elif pagina == "Browser":
         unsafe_allow_html=True,
     )
 
-    # ── Group-by tabel: record count per soort ──────────────
     st.markdown("#### Record count per soort")
     records_per_soort = (
         df_browser.groupby(["Soortgroep", "Naam soort", "Wetenschappelijke naam"])
@@ -907,11 +791,11 @@ elif pagina == "Browser":
     )
     st.dataframe(records_per_soort, use_container_width=True, height=240, hide_index=True)
 
-    # ── Ruwe data ────────────────────────────────────────────
+    # ── Ruwe data  ← v2.2: Stadium en Gedrag verwijderd (niet in mini-parquet)
     st.markdown("#### Ruwe data")
     weergave_kolommen = [
         "Hoknummer", "Soortgroep", "Naam soort", "Wetenschappelijke naam",
-        "periode_start", "Jaar", "Aantal", "Bronhouder", "Protocol", "Stadium", "Gedrag",
+        "periode_start", "Jaar", "Aantal", "Bronhouder", "Protocol",
     ]
     weergave_kolommen = [k for k in weergave_kolommen if k in df_browser.columns]
     st.dataframe(df_browser[weergave_kolommen], use_container_width=True, height=360, hide_index=True)
@@ -922,7 +806,6 @@ elif pagina == "Browser":
 # ══════════════════════════════════════════════════════════════
 elif pagina == "Analyser":
 
-    # ── Header: titel links, soort-thumbnail rechts indien gekozen ──
     hdr_col, thumb_col = st.columns([4, 1])
     with hdr_col:
         st.markdown("## Analyser — Jaartrend per hoknummer")
@@ -934,13 +817,9 @@ elif pagina == "Analyser":
         )
     st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
 
-    df_jaar_basis = (
-        df.dropna(subset=["Jaar"])
-        .copy()
-    )
+    df_jaar_basis = df.dropna(subset=["Jaar"]).copy()
     df_jaar_basis["Jaar"] = df_jaar_basis["Jaar"].astype(int)
 
-    # ── Filters: soortgroep en soort naast elkaar ────────────
     fcol1, fcol2 = st.columns(2)
 
     with fcol1:
@@ -948,10 +827,7 @@ elif pagina == "Analyser":
             df_jaar_basis["Soortgroep"].dropna().unique()
         )
         gekozen_sg_analyser = st.selectbox(
-            "Soortgroep",
-            options=sg_opties_analyser,
-            index=0,
-            key="analyser_sg",
+            "Soortgroep", options=sg_opties_analyser, index=0, key="analyser_sg",
         )
         if gekozen_sg_analyser != "Alle soortgroepen":
             df_jaar_basis = df_jaar_basis[df_jaar_basis["Soortgroep"] == gekozen_sg_analyser]
@@ -961,15 +837,11 @@ elif pagina == "Analyser":
             df_jaar_basis["Naam soort"].dropna().unique()
         )
         gekozen_soort_analyser = st.selectbox(
-            "Soort",
-            options=soort_opties_analyser,
-            index=0,
-            key="analyser_soort",
+            "Soort", options=soort_opties_analyser, index=0, key="analyser_soort",
         )
         if gekozen_soort_analyser != "Alle soorten":
             df_jaar_basis = df_jaar_basis[df_jaar_basis["Naam soort"] == gekozen_soort_analyser]
 
-    # ── Soort-thumbnail rechtsboven indien een soort is gekozen ──
     if gekozen_soort_analyser != "Alle soorten":
         lat_rij = df_jaar_basis[df_jaar_basis["Naam soort"] == gekozen_soort_analyser][
             "Wetenschappelijke naam"
@@ -1013,8 +885,7 @@ elif pagina == "Analyser":
             color_discrete_map=kleur_map,
         )
         fig_lijn.update_traces(line_width=2.5, marker_size=9)
-        # Lichter groen dan PLOT_BG (#071a0f), maar nog steeds groen
-        LICHT_GROEN_BG = "#0e3320"
+        LICHT_GROEN_BG   = "#0e3320"
         LICHT_GROEN_GRID = "#1a5035"
         groene_layout(
             fig_lijn, height=420,
@@ -1044,7 +915,6 @@ elif pagina == "Analyser":
         )
         pivot["Totaal"] = pivot.sum(axis=1)
 
-        # Stijl: 'Totaal'-kolom in grijs, overige kolommen normaal
         def style_totaal(df_s):
             styles = pd.DataFrame("", index=df_s.index, columns=df_s.columns)
             if "Totaal" in df_s.columns:
@@ -1056,7 +926,6 @@ elif pagina == "Analyser":
             use_container_width=True,
         )
 
-    # ── NDVI per hoknummer per jaar ─────────────────────────────
     st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
     st.markdown("#### NDVI per locatie per jaar")
     st.caption("Normalized Difference Vegetation Index (0–1). "
@@ -1073,8 +942,7 @@ elif pagina == "Analyser":
 
         fig_ndvi = px.line(
             df_ndvi, x="Jaar", y="NDVI",
-            color="Hoknummer",
-            markers=True,
+            color="Hoknummer", markers=True,
             color_discrete_map=kleur_map_ndvi,
             labels={"NDVI": "NDVI-score", "Jaar": "Jaar"},
         )
@@ -1091,7 +959,6 @@ elif pagina == "Analyser":
         )
         st.plotly_chart(fig_ndvi, use_container_width=True)
 
-        # ── Gecombineerde grafiek: records + NDVI op dubbele Y-as ──
         st.markdown("#### Records vs NDVI — gecombineerde weergave")
         st.caption("Lijndiagram: aantal records (links, per hoknummer) "
                    "en NDVI-score (rechts, gestippeld) op een gedeelde tijdlijn.")
@@ -1103,8 +970,6 @@ elif pagina == "Analyser":
 
         for i, hok in enumerate(unieke_hokken_ndvi):
             kleur = GROEN_PALET[i % len(GROEN_PALET)]
-
-            # Records-lijn (linker Y-as)
             rec_data = df_jaar[df_jaar["Hoknummer"] == hok]
             fig_combo.add_trace(
                 go.Scatter(
@@ -1115,8 +980,6 @@ elif pagina == "Analyser":
                 ),
                 secondary_y=False,
             )
-
-            # NDVI-lijn (rechter Y-as, gestippeld)
             ndvi_data = df_ndvi[df_ndvi["Hoknummer"] == hok]
             fig_combo.add_trace(
                 go.Scatter(
@@ -1145,11 +1008,10 @@ elif pagina == "Analyser":
         fig_combo.update_yaxes(
             title_text="NDVI-score (0–1)", secondary_y=True,
             range=[0, 1], tickformat=".2f",
-            gridcolor="rgba(0,0,0,0)",   # geen dubbele gridlijnen
+            gridcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig_combo, use_container_width=True)
 
-        # ── NDVI tabel ──────────────────────────────────────────
         st.markdown("#### NDVI-waarden per locatie per jaar")
         ndvi_pivot = (
             df_ndvi.pivot(index="Jaar", columns="Hoknummer", values="NDVI")
@@ -1250,7 +1112,7 @@ elif pagina == "Reports":
     )
     st.markdown(
         f"<p style='font-size:0.65rem;color:#1a3320;margin-top:16px;'>"
-        f"biomatrix BI-demo v2.1 · data t/m "
+        f"biomatrix BI-demo v2.2 · data t/m "
         f"{df['periode_start'].max().date()}</p>",
         unsafe_allow_html=True,
     )
