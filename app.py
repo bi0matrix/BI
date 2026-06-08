@@ -673,7 +673,7 @@ if pagina == "Home":
 
 
 # ══════════════════════════════════════════════════════════════
-# PAGINA 2 — BROWSER
+# PAGINA 2 — BROWSER  (lazy loading om geheugencrash te voorkomen)
 # ══════════════════════════════════════════════════════════════
 elif pagina == "Browser":
 
@@ -686,31 +686,43 @@ elif pagina == "Browser":
     )
     st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
 
-    bf1, bf2 = st.columns(2)
+    # ── Stap 1: Soortgroep kiezen (altijd zichtbaar) ────────────
+    sg_opties = ["— kies een soortgroep —"] + sorted(df["Soortgroep"].dropna().unique())
+    gekozen_sg = st.selectbox("Soortgroep", options=sg_opties, key="browser_sg")
 
-    with bf1:
-        sg_opties = ["Alle soortgroepen"] + sorted(df["Soortgroep"].dropna().unique())
-        gekozen_sg = st.selectbox("Soortgroep", options=sg_opties, key="browser_sg")
-    df_sg_filtered = df.copy() if gekozen_sg == "Alle soortgroepen" \
-        else df[df["Soortgroep"] == gekozen_sg].copy()
-
-    with bf2:
-        soort_df = (
-            df_sg_filtered[["Naam soort", "Wetenschappelijke naam"]]
-            .drop_duplicates()
-            .sort_values("Naam soort")
+    if gekozen_sg == "— kies een soortgroep —":
+        # Toon alleen een overzicht van soortgroepen, geen zware data
+        st.markdown("<hr class='bm-divider'>", unsafe_allow_html=True)
+        st.markdown("#### Overzicht soortgroepen")
+        sg_counts = (
+            df.groupby("Soortgroep").size()
+            .reset_index(name="Records")
+            .sort_values("Records", ascending=False)
         )
-        def soort_label(row):
-            lat = row["Wetenschappelijke naam"]
-            if pd.notna(lat) and str(lat).strip():
-                return f"{row['Naam soort']}  ({str(lat).strip()})"
-            return row["Naam soort"]
-        soort_df["label"] = soort_df.apply(soort_label, axis=1)
-        soort_opties = ["Alle soorten"] + soort_df["label"].tolist()
-        gekozen_soort_label = st.selectbox("Soort", options=soort_opties, key="browser_soort")
+        st.dataframe(sg_counts, use_container_width=True, height=400, hide_index=True)
+        st.stop()
 
+    # ── Stap 2: filter op soortgroep ───────────────────────────
+    df_sg_filtered = df[df["Soortgroep"] == gekozen_sg].copy()
+
+    # ── Stap 3: Soort kiezen ────────────────────────────────────
+    soort_df = (
+        df_sg_filtered[["Naam soort", "Wetenschappelijke naam"]]
+        .drop_duplicates()
+        .sort_values("Naam soort")
+    )
+    def soort_label(row):
+        lat = row["Wetenschappelijke naam"]
+        if pd.notna(lat) and str(lat).strip():
+            return f"{row['Naam soort']}  ({str(lat).strip()})"
+        return row["Naam soort"]
+    soort_df["label"] = soort_df.apply(soort_label, axis=1)
+    soort_opties = ["Alle soorten"] + soort_df["label"].tolist()
+    gekozen_soort_label = st.selectbox("Soort", options=soort_opties, key="browser_soort")
+
+    # ── Filter op soort ─────────────────────────────────────────
     if gekozen_soort_label == "Alle soorten":
-        df_browser = df_sg_filtered.copy()
+        df_browser = df_sg_filtered
         gekozen_latijn = None
         gekozen_soort_naam = None
     else:
@@ -719,6 +731,7 @@ elif pagina == "Browser":
         rij = soort_df[soort_df["Naam soort"] == gekozen_soort_naam]
         gekozen_latijn = rij["Wetenschappelijke naam"].iloc[0] if not rij.empty else None
 
+    # ── Soort-infokaart + afbeelding ────────────────────────────
     if gekozen_soort_naam and gekozen_latijn:
         img_col, info_col = st.columns([1, 3])
 
@@ -762,7 +775,7 @@ elif pagina == "Browser":
                     <tr><td style="color:#558866;padding-right:20px;">Records</td>
                         <td style="color:#00FF41;font-weight:700;">{records_soort:,}</td></tr>
                     <tr><td style="color:#558866;">Soortgroep</td>
-                        <td>{gekozen_sg if gekozen_sg != "Alle soortgroepen" else "–"}</td></tr>
+                        <td>{gekozen_sg}</td></tr>
                     <tr><td style="color:#558866;">Periode</td>
                         <td>{jaar_str}</td></tr>
                     <tr><td style="color:#558866;">Locatie</td>
@@ -781,24 +794,26 @@ elif pagina == "Browser":
         unsafe_allow_html=True,
     )
 
+    # ── Record count per soort (max 200 rijen tonen) ────────────
     st.markdown("#### Record count per soort")
     records_per_soort = (
         df_browser.groupby(["Soortgroep", "Naam soort", "Wetenschappelijke naam"])
         .size()
         .reset_index(name="Record count")
         .sort_values("Record count", ascending=False)
+        .head(200)
         .reset_index(drop=True)
     )
     st.dataframe(records_per_soort, use_container_width=True, height=240, hide_index=True)
 
-    # ── Ruwe data  ← v2.2: Stadium en Gedrag verwijderd (niet in mini-parquet)
+    # ── Ruwe data (max 500 rijen tonen) ─────────────────────────
     st.markdown("#### Ruwe data")
     weergave_kolommen = [
         "Hoknummer", "Soortgroep", "Naam soort", "Wetenschappelijke naam",
         "periode_start", "Jaar", "Aantal", "Bronhouder", "Protocol",
     ]
     weergave_kolommen = [k for k in weergave_kolommen if k in df_browser.columns]
-    st.dataframe(df_browser[weergave_kolommen], use_container_width=True, height=360, hide_index=True)
+    st.dataframe(df_browser[weergave_kolommen].head(500), use_container_width=True, height=360, hide_index=True)
 
 
 # ══════════════════════════════════════════════════════════════
